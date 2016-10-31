@@ -9,15 +9,19 @@ import com.niit.collaboration.model.Friend;
 @Repository
 public interface FriendDAO {
 	
-public boolean save (Friend friend);
-	
-	public boolean update (Friend friend);
-	
-	public boolean delete (Friend friend);
-	
-	public Friend  get(String id);
-	
-	public List<Friend> list();
-	
+public List<Friend> getMyFriends(String user_id);
 
+public Friend get(String user_id,String friend_id);
+
+public boolean save(Friend friend);
+
+public boolean update(Friend friend);
+
+public void delete(String user_id,String friend_id);
+
+public List<Friend> getNewFriendRequests(String user_id);
+
+public void setOnline(String user_id);
+
+public void setOffline(String user_id);
 }

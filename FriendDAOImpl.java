@@ -4,80 +4,143 @@ import java.util.List;
 
 import javax.persistence.Query;
 
+import org.hibernate.Criteria;
+import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.hibernate.HibernateException;
-import org.hibernate.SessionFactory;
 
 import com.niit.collaboration.model.Friend;
 
-@Repository(value="FriendDAO")
+@Repository
 public class FriendDAOImpl implements FriendDAO {
-	private static final Query SessionFactory = null;
-	@Autowired
+	
+	private static final Logger Log = LoggerFactory.getLogger(FriendDAOImpl.class);
+
+	@Autowired(required = true)
 	private SessionFactory sessionFactory;
-
-	public FriendDAOImpl(SessionFactory sessionFactory) {
-		this.sessionFactory = sessionFactory;
-
-	}
-   @Transactional
-	public boolean save(Friend friend) {
-		try {
-			sessionFactory.getCurrentSession().save(friend);
-			return true;
-		} catch (HibernateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
+	
+	public FriendDAOImpl(SessionFactory sessionFactory){
+		try{
+			this.sessionFactory = sessionFactory;
 		}
-
+		catch(Exception e){
+		Log.error("Unable to connect to db");
+		e.printStackTrace();
+		}
 	}
-   @Transactional
-	public boolean update(Friend friend) {
-		try {
+	
+	private Integer getMaxId(){
+		Log.debug("Starting of the method getMaxId");
+	String hql = "select max(id) from Friend";
+	Query query =  sessionFactory.getCurrentSession().createQuery(hql);
+	Integer maxID = (Integer) ((Criteria) query).uniqueResult();
+	Log.debug("Max id:"+maxID);
+	return maxID;
+	
+	}
+	
+	@Transactional
+	public boolean save(Friend friend){
+		try{
+			Log.debug("previous id"+getMaxId());
+			friend.setId(getMaxId()+1);
+			Log.debug("generated Id:"+getMaxId());
+			sessionFactory.getCurrentSession().save(friend);
+		}catch(Exception e){
+			e.printStackTrace();
+			
+		}
+		return false;
+		}
+	
+	@Transactional
+	public boolean update(Friend friend){
+		try{
 			sessionFactory.getCurrentSession().update(friend);
 			return true;
-		} catch (HibernateException e) {
-			// TODO Auto-generated catch block
+		}catch(Exception e){
 			e.printStackTrace();
-			return false;
 		}
-
+		return false;
+		
 	}
-@Transactional
-	public boolean delete(Friend friend) {
-		try {
-			sessionFactory.getCurrentSession().delete(friend);
-			return true;
-		} catch (HibernateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		}
-
+	
+	@Transactional
+	public void delete(String user_id, String friend_id){
+		Friend friend = new Friend();
+		friend.setFriend_ID(friend_id);
+		friend.setUser_ID(user_id);
+		sessionFactory.getCurrentSession().delete(friend);
+		
+		
 	}
-@Transactional
-	public Friend get(String id) {
-
-		String hql = "from Friend where id=" + " ' " + id + "'";
-		org.hibernate.Query query = sessionFactory.getCurrentSession().createQuery(hql);
-		List<Friend> list = query.list();
-		if (list == null)
-
-			return null;
-		else {
+	
+	@Transactional
+	public List<Friend> getMyFriends(String user_id){
+		String hql = "from Friend where user_id" + "'" +user_id + "' and status = '"+"A'";
+		Query query = sessionFactory.getCurrentSession().createQuery(hql);
+		List<Friend> list = (List<Friend>) query.getResultList();
+		return list;
+		
+	}
+	
+	
+	@Transactional
+	public List<Friend> getNewFriendRequests(String user_id){
+		String hql = "from Friend where user_id" + "'" +user_id + "' and status = '"+"N'";	
+		Query query = sessionFactory.getCurrentSession().createQuery(hql);
+		List<Friend> list = (List<Friend>) query.getResultList();
+		return list;
+	}
+	
+	@Transactional
+	public Friend get(String user_id, String friend_id){
+		String hql = "from Friend where user_id" + "'" +user_id + "' and FRIEND_ID = '"+friend_id;	
+		Log.debug("hql:"+hql);
+		Query query = sessionFactory.getCurrentSession().createQuery(hql);
+		
+		List<Friend> list = (List<Friend>) query.getResultList();
+		
+		if(list != null && !list.isEmpty()){
 			return list.get(0);
 		}
+	
+		return null;
 	}
-@Transactional
-	public List<Friend> list() {
-		String hql = "from Friend";
-		org.hibernate.Query query = sessionFactory.getCurrentSession().createQuery(hql);
-		return query.list();
 
+
+	
+	@Transactional
+	public void setOnline(String user_id){
+		Log.debug("starting of the method setOnline");
+		String hql = "UPDATE Friend SET isOnline = 'Y' where user_id'"
+				+ user_id +"'";
+		Log.debug("hql :" +hql);
+		Query query = sessionFactory.getCurrentSession().createQuery(hql);
+		query.executeUpdate();
+		Log.debug("Ending of the method setOnline");
+		
 	}
+	
+	@Transactional
+	public void setOffline(String user_id){
+		Log.debug("starting of the method setOnline");
+		String hql = "UPDATE Friend SET isOnline = 'Y' where user_id'"
+				+ user_id +"'";
+		Log.debug("hql :" +hql);
+		Query query = sessionFactory.getCurrentSession().createQuery(hql);
+		query.executeUpdate();
+		Log.debug("Ending of the method setOffline");
+		
+	}
+	
+	
+	
+	
+	
 }
 		
 
